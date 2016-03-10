@@ -1,0 +1,97 @@
+## Non Linear Models
+
+```{r}
+Sys.setlocale("LC_ALL", "C")
+require(ISLR)
+names(Wage)
+attach(Wage)
+```
+
+## Polynomial with Linear Regression
+
+* fit a 4th degree polynomial
+* degree 1 and 2 are very significant, 3 pretty significant
+* the function poly() generates orthogonal polynomials
+
+```{r}
+fit1 = lm(wage~poly(age,4),data=Wage)
+summary(fit1)
+```
+
+* make a grid from min to mix of the age variable
+* make predictions (predictions$fit), with standard errors (predictions$se.fit)
+
+```{r}
+age.grid = seq(from=min(age),to=max(age))
+predictions = predict(fit1,newdata=list(age=age.grid),se=T)
+```
+
+* make standard error bands
+* plot age vs wage
+* add line for fit and matlines for std errors
+* can use a package to do this instead
+
+```{r fig.width=7 , fig.height=6}
+se.bands = cbind(predictions$fit+2*predictions$se.fit,predictions$fit-2*predictions$se.fit)
+plot(age,wage,col="darkgrey")
+lines(age.grid,predictions$fit,lwd=2,col="blue")
+matlines(age.grid,se.bands,col="blue",lty=2)
+```
+
+* now re-do the same fit, but without using poly() 
+* I() is an indentity function, protects what's inside
+* p values for fit2 are different, different basis
+* but the fited values are the same
+
+```{r}
+fit2 = lm(wage~age+I(age^2)+I(age^3)+I(age^4),data=Wage)
+summary(fit2)
+plot(fitted(fit1),fitted(fit2))
+```
+
+* if you have other variables in the model, use anova to test significance of models
+* anova says age and age squared models are significant, others not
+
+```{r}
+fita = lm(wage~education,data=Wage)
+fitb = lm(wage~education+age,data=Wage)
+fitc = lm(wage~education+poly(age,2),data=Wage)
+fitd = lm(wage~education+poly(age,3),data=Wage)
+anova(fita,fitb,fitc,fitd)  
+```
+
+## Polynomial with Logistic Regression
+
+* create a high wage earners binary variable
+* make predictions with std errors
+* make std error bands, 0, -2 std errors and 2 std errors, 3 col matrix
+* look at first 5 rows of the matrix
+
+
+```{r}
+fit3 = glm(I(wage>250) ~ poly(age,3), data=Wage, family=binomial)
+summary(fit3)
+predictions2 = predict(fit3,list(age=age.grid),se=T)
+se.bands = predictions2$fit + cbind(fit=0,lower=-2*predictions2$se.fit,upper=2*predictions2$se.fit)
+se.bands[1:5,]
+```
+
+* make plot, estimate of fitted probability in solid blue
+* estimate of 95% conf interval
+* add points to show where data occurs
+
+```{r}
+prob.bands = exp(se.bands)/(1+exp(se.bands))
+matplot(age.grid,prob.bands,col="blue",lwd=c(2,1,1),lty=c(1,2,2),type='l',ylim=c(0,0.1))
+points(jitter(age),I(wage>250)/10,pch="l",cex=0.5)
+```
+
+
+
+
+
+
+
+
+
+

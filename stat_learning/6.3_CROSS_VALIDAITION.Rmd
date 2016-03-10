@@ -1,0 +1,39 @@
+## 10-Fold Cross-Validation
+
+```{r}
+Sys.setlocale("LC_ALL", "C")
+#install.packages("leaps")
+require(ISLR)
+require(leaps)
+```
+
+
+* set a seed
+* sample numbers from 1 to 10, vector of length nrow(Hitters)
+
+
+```{r}
+Hitters = na.omit(Hitters)
+with(Hitters,sum(is.na(Hitters)))
+dim(Hitters)
+set.seed(11)
+folds=sample(rep(1:10,length=nrow(Hitters)))
+folds
+table(folds)
+cv.errors=matrix(NA,10,19)
+
+for(k in 1:10)
+{
+  best.fit=regsubsets(Salary~.,data=Hitters[folds!=k,],nvmax=19,method="forward")
+  for(i in 1:19)
+  {
+    pred=predict(best.fit,Hitters[folds==k,],id=i)
+    cv.errors[k,i]=mean( (Hitters$Salary[folds==k]-pred)^2)
+  }
+}
+
+rmse.cv=sqrt(apply(cv.errors,2,mean))
+plot(rmse.cv,pch=19,type="b")
+```
+
+

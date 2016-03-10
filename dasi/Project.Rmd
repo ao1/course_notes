@@ -1,0 +1,175 @@
+
+### Introduction
+******
+
+A good education is often considered the safest avenue to ensure financial stability and career fulfillment. We will use the data from the General Social Survey to examine if there is a relationship between political leaning, and the attitude toward spending on educational improvement in the United States.
+
+
+
+### About the source data
+******
+
+The original data comes from the General Social Survey (GSS), a sociological survey that collected data on demographic characteristics and attitudes of residents of the United States from 1972 to 2012. The information is collected through a questionnaire. Each case represents a person filling out the GSS questionnaire in a particular year.
+This is an observational study, more specifically a longitudinal study. The subjects of this study and the variables in the data were not influenced or controlled in any way.
+
+The response (dependent) variable is the measure of attitude toward spending to improve the nation's education system (neteduc). It is a categorical variable.
+
+The explanatory (independent) variable is the self assessment of political views (poliviews). It is also a categorical variable. 
+
+A potential source of bias is that the survey respondents are self-assessing their political views. Self assessment can be erroneous, especially when trying to assess one's political opinions. Another source of bias is the presence of NA values in some rows of both variables, these rows were removed but this implies we are working with a more limited set of data.
+
+We can establish correlation between the variables but we should not infer causation since this is an observational study. We are not conducting an experiment. We cannot rule out the presence of a hidden variable.
+
+
+
+### Data preparation and exploratory analysis
+******
+
+We begin by loading the source data set and subsetting it to just 3 variables ("year","polviews","nateduc"). 
+
+We will be working with a subset of the source data, from the year 2000 onward. This is ensure that we have data which reflects current opinion as much as possible. 
+
+Entries with NA values are also removed.
+
+```{r}
+load(url("http://bit.ly/dasi_gss_data")) #load the source dataset
+gss2000 = gss[c("year","polviews","nateduc")] #keep only 3 variables: "year","polviews","nateduc"
+gss2000 = subset(gss2000, gss2000$year >= 2000) 
+gss2000 = na.omit(gss2000)
+```
+
+We view the summary and structure of the subsetted data frame.
+
+```{r}
+summary(gss2000)
+str(gss2000)
+```
+
+Our response (dependent) variable has 3 levels.
+
+```{r}
+length(levels(gss2000$nateduc))
+levels(gss2000$nateduc)
+```
+
+Our explanatory (independent) variable has 7 levels.
+
+```{r}
+length(levels(gss2000$polviews))
+levels(gss2000$polviews)
+```
+
+The most sizable part of the survey respondents (~38%) identified their political views as moderate.
+
+```{r}
+prop.table(table(gss2000$polviews))
+barplot(table(gss2000$polviews)) 
+```
+
+We can see that a majority of the respondents (~73%) opined that there is too little money spent on improving the country's educational system.
+
+```{r}
+prop.table(table(gss2000$nateduc))
+barplot(table(gss2000$nateduc))
+```
+
+Using a mosaic plot, we can visualize the opinion spread across the two variables. Respondents who identified themselves on the liberal side of the political spectrum appear to favor the opinion that the US spends too little on improving education. Respondents who identified themselves as conservative appear more divided.
+
+```{r}
+mosaicplot(table(gss2000$polviews,gss2000$nateduc),color = T, main="Political leaning vs Opinion about spending on education")
+```
+
+
+
+### Inference
+******
+
+Since both variables are categorical and have more than 2 levels each, we will use the chi-square independence test.
+
+The null hypothesis states that political leaning and the attitude toward spending on educational improvement are independent of each other. The attitude about spending on educational improvement does not vary based on where one falls on the political spectrum.
+
+The alternative hypothesis states that political leaning and the attitude toward spending on educational improvement are dependent. The attitude about spending on educational improvement varies with where one falls on the political spectrum.
+
+The conditions for the independence test are fulfilled:
+
+1. The General Social Survey (GSS) used random sampling without replacement.
+2. The sample size is less than 10% of the current population of the US.
+
+```{r}
+nrow(gss2000) < (318900000*0.10)
+```
+
+3. Each case contributes to one cell at a time.
+4. Each scenario has at least 5 expected cases.
+
+```{r}
+table(gss2000$polviews,gss2000$nateduc) >= 5
+```
+
+We can examine the contingency table (with sums displayed).
+
+```{r}
+addmargins(table(gss2000$polviews,gss2000$nateduc))
+```
+
+We run the chisq.test function.
+
+```{r}
+test = chisq.test(table(gss2000$polviews,gss2000$nateduc))
+
+```
+
+First we show the observed values.
+
+```{r}
+test$observed
+```
+
+The expected value table was rounded off to the nearest second digit.
+
+```{r}
+round(test$expected, digits=2)
+```
+
+Examining the results of the test, we get a p-value of 2.2e-16, which is equal to 0.00000000000000022. 
+
+```{r}
+test
+```
+
+Since the p-value is very small we can reject the null hypothesis, which states that attitudes toward spending on educational improvement do not vary with political leaning. Instead we accept the alternative hypothesis that there is an association between the two variables.
+
+
+
+### Summary
+******
+
+Overall, the General Social Survey (GSS) data has provided convincing evidence that political leaning and the opinion about spending on educational improvement are associated. 
+
+Nevertheless, we cannot surmise causality based on these results because this is an observational study, not an experiment. There could be confounding variables such as the respondent's profession or age.
+
+It would be interesting to have access to respondent data which provides more levels regarding the opinion on education spending by the government. We could get a clearer picture for the reasons why people agree or disagree about the alotted amount of money. 
+
+It would also be interesting to examine which other opinions about government spending in general follow a similar political leaning pattern.
+
+
+
+### Citation
+******
+
+Smith, Tom W., Michael Hout, and Peter V. Marsden. General Social Survey, 1972-2012 [Cumulative File]. ICPSR34802-v1. Storrs, CT: Roper Center for Public Opinion Research, University of Connecticut /Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributors], 2013-09-11. doi:10.3886/ICPSR34802.v1
+
+Persistent URL: http://doi.org/10.3886/ICPSR34802.v1
+
+
+
+### Data sample
+******
+
+We output the first 50 rows of the data frame used for this report.
+
+```{r}
+
+print(head(gss2000,50))
+
+```

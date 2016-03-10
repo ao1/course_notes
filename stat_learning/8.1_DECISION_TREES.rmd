@@ -1,0 +1,94 @@
+## Decision Trees
+
+* Turn sales into a binary variable
+* Put High back into the dataframe (merge it back)
+
+```{r}
+par(mfrow=c(1,1))
+Sys.setlocale("LC_ALL", "C")
+require(ISLR)
+require(tree)
+names(Carseats)
+attach(Carseats)
+hist(Sales)
+High=ifelse(Sales<=8,"No","Yes")
+Carseats=data.frame(Carseats,High)
+```
+
+* fit a model using tree
+* exclude sales variable because High was created from sales
+* plotthe model
+* annotate the model
+* complex tree to look at because of many splits
+* each terminal node is labeled yes or no
+
+```{r}
+tree.carseats=tree(High~ . -Sales,data=Carseats)
+summary(tree.carseats)
+plot(tree.carseats) 
+text(tree.carseats,pretty = 0)
+```
+
+* look at a detailed version of the tree
+* how many observations at root, mean deviance at root,  
+
+```{r}
+tree.carseats
+```
+
+* create a train and test set
+* re-fit tree to subset
+* tree plot still looks complex
+
+```{r}
+set.seed(1011)
+train=sample(1:nrow(Carseats),250)
+tree.carseats=tree(High~.-Sales,Carseats,subset = train)
+plot(tree.carseats)
+text(tree.carseats,pretty = 0)
+```
+
+* make predictions on test set
+* end up with 0.7 prediction accuracy
+
+```{r}
+predictions1 = predict(tree.carseats,Carseats[-train,],type="class")
+table1 = with(Carseats[-train,],table(predictions1,High))
+sum(diag(table1))/sum(table1)
+```
+
+* the tree might be too variable
+* use 10-fold cross validation, to prune it optimally later
+* results tell us details of path of cv
+  + size of trees, as they were pruned back
+  + deviance, as the pruning proceeded
+  + what the cost complexity parameter was in the process
+* from plot we pick 13 as a good pruning size
+
+```{r}
+cv.carseats = cv.tree(tree.carseats,FUN=prune.misclass)
+cv.carseats
+plot(cv.carseats)
+```
+
+* prune the tree to size 13
+* plot and annotate it
+* it is a bit more shallow
+
+```{r}
+prune.carseats = prune.misclass(tree.carseats,best=13)
+plot(prune.carseats)
+text(prune.carseats,pretty=0)
+```
+
+* now we evalute the pruned tree on a test set
+
+```{r}
+predictions2 = predict(prune.carseats,Carseats[-train,],type="class")
+table2 = with(Carseats[-train,],table(predictions2,High))
+sum(diag(table2))/sum(table2)
+```
+
+* the correct classifications dropped a bit
+* only positive is we got a shallower tree, easier to interpret
+* random forest usually outperforms trees

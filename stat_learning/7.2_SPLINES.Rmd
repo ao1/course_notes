@@ -1,0 +1,105 @@
+## Splines
+
+```{r}
+Sys.setlocale("LC_ALL", "C")
+#install.packages("gam")
+require(ISLR)
+require(splines)
+names(Wage)
+attach(Wage)
+```
+
+## Cubic Splines / Fixed Knot Regression Splines
+
+* splines are more flexible
+* spline is a cubic polynomial
+* knots are places of discontinuity
+* splines are more local than polynomial
+* nice way of fitting flexible functions
+* bs() generates the basis
+
+```{r}
+fit=lm(wage~bs(age,knots=c(25,40,60)),data=Wage)
+fit
+plot(age,wage,col="darkgrey")
+lines(age.grid,predict(fit,list(age=age.grid)),col="darkgreen",lwd=2)
+abline(v=c(25,40,60),lty=2,col="darkgreen")
+```
+
+## Smoothing Splines
+
+* 16 degrees of freedom
+* too wiggly in this case
+
+```{r}
+fit2 = smooth.spline(age,wage,df=16)
+lines(fit2,col="red",lwd=2)
+```
+
+* use loocv to determine the smoothing parameter automatically
+* will get warning about many ties in x, but this is acceptable
+* cv will use 6.79 degrees of freedom
+
+```{r}
+fit3 = smooth.spline(age,wage,cv=T)
+lines(fit3,col="purple",lwd=2)
+fit3$df
+
+```
+
+## Generalized Additive Models
+
+* call gam package, fit a generalized additive model
+* tell it the response is wage
+* tell it we want a smooth term in age with 4 deg of freedom
+* tell it we want a smooth term in year with 4 deg of freedom
+* education is a factor var, so we have it in as a linear term
+* s() is the smoothing spline function of gam 
+* age and year will be fit jointly
+* par(mfrow=c(1,3)) sets plot layout to 3 columns
+
+```{r fig.width=10,  fig.height=5  }
+require(gam)
+gam1 = gam(wage~s(age,df=4)+s(year,df=4)+education,data=Wage)
+par(mfrow=c(1,3))
+plot(gam1,se=T)
+```
+
+* gam also works with logistic regression
+* leave off the std errors
+* plot the contributions to the logit, of the probability, each as a separate function
+
+```{r}
+gam2 = gam(I(wage>250)~s(age,df=4)+s(year,df=4)+education,data=Wage,family = binomial)
+plot(gam2)
+```
+
+* lets see if we need a non-linear term for the variable year
+* do anova to test gam2 and gam2a
+* chisq p value is 0.8242, says we dont need this nonlinear term for year, a linear term will be fine
+
+```{r}
+gam2a = gam(I(wage>250)~s(age,df=4)+year+education,data=Wage,family = binomial)
+anova(gam2a,gam2,test="Chisq")
+```
+
+* use the plot method to plot models fit by lm and glm
+* fit a linear model with wage as response
+* instead of using gam, we'll fit lm
+* generate a spline basis using ns() (natural splines)
+* instead of knots, specify defgrees of freedom
+* since lm is not of class gam, we write out plot.gam() to use that plot method
+* plots a fitted function, including std errors
+
+```{r  fig.width=10 , fig.height=5}
+par(mfrow=c(1,3))
+lm1 = lm(wage~ns(age,df=4)+ns(year,df=4)+education,data=Wage)
+plot.gam(lm1,se=T)
+
+```
+
+
+
+
+
+

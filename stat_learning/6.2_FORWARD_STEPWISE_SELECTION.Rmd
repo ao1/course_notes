@@ -1,0 +1,92 @@
+## Forward Stepwise Selection
+
+```{r}
+Sys.setlocale("LC_ALL", "C")
+#install.packages("leaps")
+require(ISLR)
+require(leaps)
+```
+
+* Greedy algorithm
+* Produces a nested sequence of models
+
+```{r}
+regfit.fwd = regsubsets(Salary ~ . , data = Hitters , nvmax=19 , method = "forward")
+regfit.fwd.summary = summary(regfit.fwd)
+regfit.fwd.summary
+```
+
+Plot the schematic
+
+```{r}
+plot(regfit.fwd,scale="Cp")
+```
+
+## Model selection using a validation set
+
+* Remove missing values from dataframe
+* Create a train set from a random index of 180/263 numbers
+* 
+
+
+```{r}
+Hitters = na.omit(Hitters)
+with(Hitters,sum(is.na(Hitters)))
+dim(Hitters)
+set.seed(1)
+numbers = sample(seq(263),180,replace = F)
+numbers
+train = Hitters[numbers,] #index by rows from numbers vector
+regfit.fwd = regsubsets(Salary ~ . , data = train ,nvmax=19,method="forward")
+```
+
+* make predictions on test set
+* make a vector with 19 empty slots, one for each variable
+* make an x matrix corresponding to test set
+
+
+```{r}
+test = Hitters[-numbers,]
+val.errors = rep(NA,19) # make 19 nulls
+x.test = model.matrix(Salary~. , data=test) # test matrix
+```
+
+* for each model
+    + coef to extract coefficients
+    + for each size
+    + index the columns by the names on coefficient vector
+    + do a matrix, multiplied by coefficient vector
+    + compute the mean squared error
+    
+```{r}
+
+for(i in 1:19)
+{
+  coefi = coef(regfit.fwd,id=i)
+  pred = x.test[,names(coefi)]%*%coefi
+  val.errors[i]=mean((test$Salary-pred)^2)
+}
+
+```
+
+Make a plot
+
+```{r}
+plot(sqrt(val.errors),ylab="Root MSE",ylim=c(300,400),pch=19,type="b")
+points(sqrt(regfit.fwd$rss[-1]/180),col="blue",pch=19,type="b")
+legend("topright",legend=c("Training","Validation"),col=c("blue","black"),pch=19)
+```
+
+Write our own predict regsubset function
+
+```{r}
+predict.regsubsets=function(object,newdata,id,...)
+{
+  form = as.formula(object$call[[2]])
+  mat=model.matrix(form,newdata)
+  coefi = coef(object,id=id)
+  mat[,names(coefi)%*%coefi]
+}
+```
+
+

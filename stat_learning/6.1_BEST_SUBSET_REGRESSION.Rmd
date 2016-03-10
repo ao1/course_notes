@@ -1,0 +1,81 @@
+Intro
+=================
+
+Using R Markdown for this project
+See "Markdown Quick Reference" for more info
+
+```{r}
+Sys.setlocale("LC_ALL", "C")
+#install.packages("leaps")
+require(ISLR)
+require(leaps)
+```
+
+Our response variable is Salary
+
+```{r}
+summary(Hitters$Salary)
+```
+
+Remove missing values from dataframe
+
+```{r}
+Hitters = na.omit(Hitters)
+with(Hitters,sum(is.na(Hitters)))
+```
+
+## Best subset regression
+
+* Agressive, looks at all possible subsets.
+* Produces a sequence of models, best subset for each size.
+* By default it goes up to subset of size 8.
+* Don't use this method with over 10-20 predictors
+
+```{r}
+regfit.full = regsubsets(Salary~. , data=Hitters)
+summary(regfit.full)
+```
+
+Re-run with 19 variables and save summary to a variable
+
+```{r}
+ncol(Hitters)-1 # how many max variables used?
+regfit.full = regsubsets(Salary~. , data=Hitters , nvmax = 19)
+regfit.summary = summary(regfit.full)
+regfit.summary
+```
+
+Plot Cp in a "map plot"", black means in, white means out
+
+```{r}
+plot(regfit.full,scale="Cp")
+```
+
+We want to pick the model with the lowest Cp
+
+```{r}
+names(regfit.summary)
+regfit.summary$cp
+which.min(regfit.summary$cp)
+regfit.summary$cp[10]
+```
+
+Plot the Cp statistic vs number of variables
+Color the point with lowest Cp
+pch means plotting character (plotting symbol) used
+
+```{r}
+plot( regfit.summary$cp , xlab="Num of Variables", ylab="Cp" )
+points(10,regfit.summary$cp[10],pch=20,col="red")
+```
+
+Output a coefficient vector for the 10 variables in the model
+
+```{r}
+coef(regfit.full,10)
+```
+
+
+
+
+
