@@ -1,0 +1,105 @@
+## Linear Support Vector Machine
+
+* generate some data, in 2 dimensions
+* plot the data and color code it, depending on if y is +1 or -1
+
+```{r}
+set.seed(10111)
+x = matrix(rnorm(40),20,2)
+y=rep(c(-1,1),c(10,10))
+x[y==1,] = x[y==1,]+1
+plot(x,col=y+3,pch=19)
+```
+
+* load package e1071
+* create dataframe from x and y (coerced into a factor variable)
+* columns from x are unpacked into x1 and x2 in dataframe
+
+```{r}
+library(e1071)
+dat = data.frame(x,y=as.factor(y))
+summary(dat)
+```
+
+* fit svm (a linear) classifier
+* scale=F means we are not standardizing the variables
+* cost=10, this is the tuning parameter
+* show summary of the model
+* number of support vectors (points close to boundary or on the wrong side of boundary) is 6
+
+```{r}
+svmfit = svm(y~. , data=dat , kernel="linear" , cost=10 , scale=F)
+svmfit
+```
+
+* plot svm 
+* plot is bad because it puts X2 on horiz. and X1 on vert. axis
+
+
+```{r}
+plot(svmfit,dat)
+```
+
+
+* make function that makes a grid
+  + apply range to each variable in x
+  + make a grid of length n using seq()
+  + expand.grid makes the lattice
+
+```{r}
+make.grid=function(x,n=75)
+{
+  grange=apply(x,2,range)
+  x1=seq(from=grange[1,1],to=grange[2,1],length=n)
+  x2=seq(from=grange[1,2],to=grange[2,2],length=n)
+  expand.grid(X1=x1,X2=x2)
+}
+```
+
+* apply function
+* 5625 points on grid
+* predict from svmfit at the values on xgrid (new data)
+
+```{r}
+xgrid=make.grid(x)
+dim(xgrid) # 5625 points on grid
+xgrid[1:10,]
+ygrid=predict(svmfit,xgrid)
+
+```
+
+* plot all points in xgrid, color according to prediction
+* see the decision boundary
+* each point is a point on the lattice
+* identify all of the original points, close to the boundary
+* circle points that are instrumental to making the decision boundary
+
+```{r}
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2)
+points(x,col=y+3,pch=19)
+points(x[svmfit$index,],pch=5,cex=2)
+```
+
+* svm in R is not very user friendly
+* we don't ge the coefficients used to describe the linear function
+* check chap 12 of ESL to do this
+* extract beta and beta0
+
+```{r}
+beta=drop(t(svmfit$coefs)%*%x[svmfit$index,])
+beta0=svmfit$rho
+```
+
+* re-plot points, with the decision boundary
+* some of the support points are exactly on the margin
+* some are inside the margin
+
+```{r}
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2)
+points(x,col=y+3,pch=19)
+points(x[svmfit$index,],pch=5,cex=2)
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+```
+

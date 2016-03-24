@@ -1,0 +1,31 @@
+### Principal Components
+
+* means are different from variances 
+* principal components method deals only with variances
+* Assault variance is high, will eat up the first principal component
+* variances are different because of different units in all the variables
+
+
+```{r}
+names(USArrests)
+apply(USArrests,2,mean)
+apply(USArrests,2,var)
+```
+
+* perform pca
+* standardize the variables
+* plot the first two principal components ( loadings and principal component scores in one plot )
+* states with high crime go to the left, low crime to the right
+* arrows point which states haw which types of crimes
+
+```{r}
+pca.out = prcomp(USArrests,scale=T)
+pca.out
+names(pca.out)
+biplot(pca.out,scale=0,cex=0.6)
+```
+
+
+
+
+
