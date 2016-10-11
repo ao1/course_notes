@@ -27,7 +27,7 @@ We can establish correlation between the variables but we should not infer causa
 
 We begin by loading the source data set and subsetting it to just 3 variables ("year","polviews","nateduc"). 
 
-We will be working with a subset of the source data, from the year 2000 onward. This is ensure that we have data which reflects current opinion as much as possible. 
+We will be working with a subset of the source data, from the year 2000 onward. This is to ensure that we have data which reflects current opinion as much as possible. 
 
 Entries with NA values are also removed.
 
